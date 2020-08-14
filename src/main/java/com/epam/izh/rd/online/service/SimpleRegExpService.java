@@ -1,5 +1,9 @@
 package com.epam.izh.rd.online.service;
 
+import java.io.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class SimpleRegExpService implements RegExpService {
 
     /**
@@ -11,7 +15,23 @@ public class SimpleRegExpService implements RegExpService {
      */
     @Override
     public String maskSensitiveData() {
-        return null;
+
+        StringBuffer buffer = new StringBuffer();
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(
+                System.getProperty("user.dir") + "/src/main/resources/sensitive_data.txt"))) {
+            Pattern pattern = Pattern.compile("((\\d{4}\\s*)(\\d{4}\\s*){2}(\\d{4}\\s*))");
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                Matcher matcher = pattern.matcher(line);
+                while (matcher.find()) {
+                    matcher.appendReplacement(buffer, matcher.group(2) + "**** **** " + matcher.group(4));
+                }
+                matcher.appendTail(buffer);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return buffer.toString();
     }
 
     /**
@@ -22,6 +42,18 @@ public class SimpleRegExpService implements RegExpService {
      */
     @Override
     public String replacePlaceholders(double paymentAmount, double balance) {
-        return null;
+        String line;
+        StringBuilder buffer = new StringBuilder();
+        try (BufferedReader bufferedReader = new BufferedReader(
+                new FileReader(System.getProperty("user.dir") + "/src/main/resources/sensitive_data.txt"))) {
+            while ((line = bufferedReader.readLine()) != null) {
+                line = line.replaceAll("\\$\\{(payment_amount)\\}", String.valueOf((int) paymentAmount));
+                line = line.replaceAll("\\$\\{(balance)\\}", String.valueOf((int) balance));
+                buffer.append(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return buffer.toString();
     }
 }
